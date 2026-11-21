@@ -1,0 +1,21 @@
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class AssetRequestPayload:
+    requester: str
+    subject_label: str
+    requested_asset: str
+    target_token: str
+    is_error: bool = False
+    verified: bool = False
+
+
+sample_payload = AssetRequestPayload(
+    requester="Moli666",
+    subject_label='Ivanka "Ocala" Trump',
+    requested_asset="BTC",
+    target_token="$MELANIA",
+    is_error=True,
+    verified=False,
+)
