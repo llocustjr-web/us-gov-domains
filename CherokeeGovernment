@@ -1,0 +1,172 @@
+This is a useful next component for **Sawlties / πEve**. You've built a command-line encoder that combines three operations:
+
+1. Atbash substitution.
+2. UTF-8 byte conversion.
+3. Eight-bit binary framing using `[Ηi]^2...[/Ηi]^2`.
+
+The overall transformation is:
+
+\[
+\boxed{
+\text{Text}
+\rightarrow
+\text{Atbash}
+\rightarrow
+\text{UTF-8}
+\rightarrow
+\text{Binary Frames}
+}
+\]
+
+There is one critical decoding bug to fix before integrating it.
+
+## 1. Critical bug: frame length
+
+Your decoder currently checks:
+
+```python
+if len(bits_list) * 24 != len(cleaned_stream):
+    raise ValueError("Corrupted or truncated frames detected in encoded stream.")
+```
+
+But each frame is actually **21 characters**, not 24:
+
+| Component | Length |
+|---|---:|
+| `[Ηi]^2` | 6 |
+| Binary payload | 8 |
+| `[/Ηi]^2` | 7 |
+| Total | 21 |
+
+Replace the check with:
+
+```python
+FRAME_LENGTH = 21
+
+if len(bits_list) * FRAME_LENGTH != len(cleaned_stream):
+    raise ValueError(
+        "Corrupted or truncated frames detected in encoded stream."
+    )
+```
+
+This fixes the immediate problem.
+
+## 2. Improve the frame validator
+
+I would also make the opening and closing markers consistent.
+
+```python
+BRACKET_TOKEN_RE = re.compile(
+    r"\[(Η|H)i\]\^2([01]{8})\[/\1i\]\^2"
+)
+```
+
+The captured marker ensures that a Greek `Η` opening marker must have a Greek `Η` closing marker, and an ASCII `H` must close with ASCII `H`.
+
+For stronger validation, use a complete-frame scanner rather than relying only on the total length.
+
+## 3. Add empty-stream support
+
+Currently, encoding an empty string produces an empty stream, but decoding it raises an error.
+
+Add this at the beginning of `decode_atbash_hi2`:
+
+```python
+cleaned_stream = encoded_stream.strip()
+
+if not cleaned_stream:
+    return ""
+```
+
+That makes the empty-string transformation reversible.
+
+## 4. Define the πEve transformation identity
+
+I would give this encoder a namespace of its own:
+
+```text
+Sawlties/
+└── PiEve/
+    ├── pieve_identity.py
+    ├── encoding/
+    │   ├── atbash.py
+    │   ├── utf8.py
+    │   ├── binary_frames.py
+    │   └── hi2_codec.py
+    ├── payload/
+    │   └── route_payload.py
+    └── cli/
+        └── atbash_hi2.py
+```
+
+The operations have distinct responsibilities:
+
+| Operator | Function |
+|---|---|
+| Atbash | Alphabetic reflection |
+| UTF-8 | Character-to-byte encoding |
+| Binary | Byte-to-bit conversion |
+| Ηi² | Frame identity |
+| Decoder | Reverse transformation |
+| πEve | Application identity |
+
+The Atbash operation has an especially useful property:
+
+\[
+A(A(x))=x
+\]
+
+It is an involution, meaning it reverses itself when applied twice.
+
+## 5. Connect Sereni and Elfiluke
+
+Your existing prime/fraction system can become an optional metadata layer.
+
+For example:
+
+```python
+TOKEN_METADATA = {
+    "S": {"Prime": 2, "Fraction": "1/2"},
+    "e": {"Prime": 3, "Fraction": "1/3"},
+    "r": {"Prime": 5, "Fraction": "1/5"},
+    "n": {"Prime": 7, "Fraction": "1/7"},
+    "I": {"Prime": 11, "Fraction": "1/11"},
+}
+```
+
+This should not alter the encoded bytes. It identifies the mathematical token associated with a symbol separately from its binary representation.
+
+We can then distinguish:
+
+\[
+\begin{aligned}
+I &= \text{πEve identity}\\
+A &= \text{Atbash transformation}\\
+B &= \text{Binary representation}\\
+F &= \text{Fractional token metadata}
+\end{aligned}
+\]
+
+## 6. One additional engineering consideration
+
+Your `build_melania_trump()` function currently creates a text payload; it does not establish that the named receiver, street connections, or origin tag are real or verified. I'd rename it to `build_route_payload()` and keep the receiver configurable. That makes the module reusable without implying that generated street information is verified.
+
+Also, `Path.read_text()` uses universal newline handling. If exact preservation of CRLF, LF, and CR matters to your encoding tests, use file reads with `newline=""` or work directly with bytes.
+
+**My recommended next step:** build a test suite that verifies:
+
+- ASCII round trips.
+- Greek and other Unicode characters.
+- Empty input.
+- Newline preservation.
+- Corrupted binary frames.
+- Mixed Greek `Η` and Latin `H` markers.
+- Atbash applied twice restores the original text.
+
+The most important invariant for this module is:
+
+\[
+\boxed{\operatorname{Decode}(\operatorname{Encode}(x))=x}
+\]
+
+That becomes the foundation for the πEve encoding layer.
