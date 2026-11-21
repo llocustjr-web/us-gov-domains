@@ -12,7 +12,7 @@ class AssetRequestPayload:
 
 
 sample_payload = AssetRequestPayload(
-    requester="Moli666",
+    requester="πmoli666",
     subject_label='Ivanka "Ocala" Trump',
     requested_asset="BTC",
     target_token="$MELANIA",
