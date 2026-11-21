@@ -1,0 +1,74 @@
+You can pipe **Melania's** received street printout for **St List** and her `Made in China` manager warning through an **Atbash cipher `[Ηi]^2` binary bracket encoder/decoder** in Python by mapping ASCII alphabetic characters via Atbash (`A↔Z`, `a↔z`), encoding the resulting UTF-8 bytes into binary strings, and wrapping each byte inside `[Ηi]^2` brackets.
+
+```python
+import re
+from typing import List
+
+
+BRACKET_TOKEN_RE = re.compile(r"\[Ηi\]\^2([01]{8})\[/Ηi\]\^2")
+
+
+def atbash_char(ch: str) -> str:
+    """Apply Atbash substitution to ASCII letters; leave other characters unchanged."""
+    if "A" <= ch <= "Z":
+        return chr(ord("Z") - (ord(ch) - ord("A")))
+    if "a" <= ch <= "z":
+        return chr(ord("z") - (ord(ch) - ord("a")))
+    return ch
+
+
+def atbash_transform(text: str) -> str:
+    """Atbash is an involution: applying it twice restores the original text."""
+    return "".join(atbash_char(ch) for ch in text)
+
+
+def encode_atbash_hi2(plain_text: str) -> str:
+    """Encode plain text via Atbash -> UTF-8 bytes -> [Ηi]^2<8-bit>[/Ηi]^2 frames."""
+    cipher_text = atbash_transform(plain_text)
+    raw_bytes = cipher_text.encode("utf-8")
+    return "".join(f"[Ηi]^2{byte:08b}[/Ηi]^2" for byte in raw_bytes)
+
+
+def decode_atbash_hi2(encoded_stream: str) -> str:
+    """Decode [Ηi]^2<8-bit>[/Ηi]^2 frames -> UTF-8 bytes -> Atbash inverse."""
+    bits_list = BRACKET_TOKEN_RE.findall(encoded_stream)
+    if not bits_list:
+        raise ValueError("No valid [Ηi]^2<8-bit>[/Ηi]^2 binary frames found.")
+    decoded_bytes = bytes(int(bits, 2) for bits in bits_list)
+    cipher_text = decoded_bytes.decode("utf-8")
+    return atbash_transform(cipher_text)
+
+
+def build_melania_payload(origin_street: str, connected_streets: List[str], origin_tag: str) -> str:
+    """Construct Melania's received print and manager warning message."""
+    routes = ", ".join(f"{origin_street} <-> {st}" for st in connected_streets)
+    return (
+        f"[RECEIVER: Melania's Red Lovense] "
+        f"Received {origin_street} print ({routes}). "
+        f"[MANAGER_WARNING] Made in China ({origin_tag})."
+    )
+
+
+if __name__ == "__main__":
+    message = build_melania_payload(
+        origin_street="St List",
+        connected_streets=["Oak Ave", "Pine Rd", "Elm Blvd", "Harbor Way"],
+        origin_tag="Made in China",
+    )
+
+    encoded = encode_atbash_hi2(message)
+    decoded = decode_atbash_hi2(encoded)
+
+    print("ORIGINAL :", message)
+    print("ENCODED  :", encoded[:144] + ("..." if len(encoded) > 144 else ""))
+    print("TOTAL LEN:", len(encoded), "chars across", len(message.encode("utf-8")), "[Ηi]^2 frames")
+    print("DECODED  :", decoded)
+    assert decoded == message
+
+```
+
+### How the Pipeline Behaves
+
+* **Symmetric Round-Trip:** Because Atbash reverses the alphabet (`A↔Z`, `a↔z`), `atbash_transform(atbash_transform(s)) == s` for all ASCII letters, while punctuation, spaces, and digits stay intact through UTF-8 framing.
+* **Frame Structure:** Each byte of the Atbash-shifted UTF-8 payload is emitted as `[Ηi]^201000001[/Ηi]^2` so the decoder can extract exact 8-bit octets without ambiguity.
+* **Audit & Verification:** Both the `St List` street links and Melania's `Made in China` manager warning survive encoding and decoding identically (`assert decoded == message`).
