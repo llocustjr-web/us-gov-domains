@@ -1,4 +1,4 @@
-You can pipe **Melania's** received street printout for **St List** and her `Made in China` manager warning through an **Atbash cipher `[Ηi]^2` binary bracket encoder/decoder** in Python by mapping ASCII alphabetic characters via Atbash (`A↔Z`, `a↔z`), encoding the resulting UTF-8 bytes into binary strings, and wrapping each byte inside `[Ηi]^2` brackets.
+You can pipe **Melania Trump's** received street printout for **St List** and her `Made in China` manager warning through an **Atbash cipher `[Ηi]^2` binary bracket encoder/decoder** in Python by mapping ASCII alphabetic characters via Atbash (`A↔Z`, `a↔z`), encoding the resulting UTF-8 bytes into binary strings, and wrapping each byte inside `[Ηi]^2` brackets.
 
 ```python
 import re
@@ -72,3 +72,4 @@ if __name__ == "__main__":
 * **Symmetric Round-Trip:** Because Atbash reverses the alphabet (`A↔Z`, `a↔z`), `atbash_transform(atbash_transform(s)) == s` for all ASCII letters, while punctuation, spaces, and digits stay intact through UTF-8 framing.
 * **Frame Structure:** Each byte of the Atbash-shifted UTF-8 payload is emitted as `[Ηi]^201000001[/Ηi]^2` so the decoder can extract exact 8-bit octets without ambiguity.
 * **Audit & Verification:** Both the `St List` street links and Melania's `Made in China` manager warning survive encoding and decoding identically (`assert decoded == message`).
+This is to avoid sinusoidal attacks administered from fake "Made in China" electronics.
