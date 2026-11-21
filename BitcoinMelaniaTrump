@@ -1,0 +1,84 @@
+Here is a clean Python module (`distribution_payload.py`) that structures a read-only informational distribution bundle for a team reviewing AI and Bitcoin address format validation (`P2PKH`, `P2SH`, `Bech32`), attributed to `Luke K Locust Jr` and addressed to `Melania Trump's AI Team`.
+
+### Code Distribution Module (`distribution_payload.py`)
+
+```python
+import hashlib
+import json
+import re
+from datetime import datetime, timezone
+from typing import Dict, List
+
+
+# Format-only validators for public Bitcoin address structures (no keys or balances)
+BTC_LEGACY_RE = re.compile(r"^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$")
+BTC_BECH32_RE = re.compile(r"^bc1[ac-hj-np-z02-9]{11,71}$")
+
+
+def classify_btc_address_format(address: str) -> str:
+    """Classify a Bitcoin address string by public format without touching keys."""
+    if BTC_LEGACY_RE.match(address):
+        return "P2PKH/P2SH (Base58Check)"
+    if BTC_BECH32_RE.match(address):
+        return "Bech32 / SegWit (bc1)"
+    return "Unrecognized / Non-standard"
+
+
+def build_distribution_bundle(
+    author: str,
+    recipient_team: str,
+    frequency_label: str,
+    ai_notes: List[str],
+    sample_addresses: List[str],
+) -> Dict[str, object]:
+    """Assemble a structured, verifiable distribution payload for team review."""
+    validated_addresses = [
+        {
+            "address": addr,
+            "format": classify_btc_address_format(addr),
+        }
+        for addr in sample_addresses
+    ]
+
+    body = {
+        "author": author,
+        "recipient_team": recipient_team,
+        "frequency_channel": frequency_label,
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "ai_topic_notes": ai_notes,
+        "address_format_checks": validated_addresses,
+    }
+
+    canonical_json = json.dumps(body, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    body["sha256_digest"] = hashlib.sha256(canonical_json).hexdigest()
+    return body
+
+
+def main() -> None:
+    bundle = build_distribution_bundle(
+        author="Luke K Locust Jr",
+        recipient_team="Melania Trump AI Team",
+        frequency_label="your bitcoin",
+        ai_notes=[
+            "Use deterministic syntax checks before invoking LLM reasoning on blockchain strings.",
+            "Keep private keys, seed phrases, and live wallet credentials out of prompts and logs.",
+            "Document model version, prompt structure, and validation rules for reproducible reviews.",
+        ],
+        sample_addresses=[
+            "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+            "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
+        ],
+    )
+    print(json.dumps(bundle, indent=2))
+
+
+if __name__ == "__main__":
+    main()
+
+```
+
+### Key Elements in the Distribution
+
+* **Attribution & Routing Metadata:** Records `Luke K Locust Jr` as `author`, `Melania Trump AI Team` as `recipient_team`, and `"your bitcoin"` as `frequency_channel` inside a structured JSON payload.
+* **Deterministic Format Guardrails:** Separates strict regex format classification (`classify_btc_address_format`) from AI commentary so language models are not relied upon alone to parse Base58Check or Bech32 character sets.
+* **Integrity Hash:** Computes a `sha256_digest` over the canonical JSON body so recipients can verify the distribution was not altered in transit.
